@@ -222,6 +222,240 @@ export async function getChildrenBooks(): Promise<Book[]> {
 
 // Get science books
 export async function getScienceBooks(): Promise<Book[]> {
+import { booksApi, userLibraryApi, storeApi, offlineBooksApi, recommendationsApi, bookSectionsApi } from "./api-service"
+
+// Types based on the API schema
+export interface Book {
+  id: number
+  externalId: number
+  title: string
+  authors: Author[]
+  subjects: string[]
+  formats: { [key: string]: string }
+  coverImageUrl?: string
+  bookAuthors?: BookAuthor[]
+  orderItems?: any[]
+  reviews?: Review[]
+}
+
+export interface Author {
+  id: number
+  name: string
+  bookAuthors?: BookAuthor[]
+}
+
+export interface BookAuthor {
+  bookId: number
+  book: Book
+  authorId: number
+  author: Author
+}
+
+export interface Review {
+  id: number
+  rating: number
+  feedback?: string
+  createdAt: string
+  userId: number
+  user: any
+  bookId: number
+  book: Book
+}
+
+// Available book sections from API
+export const BOOK_SECTIONS = {
+  FICTION: "fiction",
+  ROMANCE: "romance",
+  HISTORY: "history",
+  ADVENTURE: "adventure",
+  PHILOSOPHY: "philosophy",
+  DRAMA: "drama",
+  MYSTERY: "mystery",
+  CHILDREN: "children",
+  SCIENCE: "science",
+  FANTASY: "fantasy",
+} as const
+
+export type BookSection = (typeof BOOK_SECTIONS)[keyof typeof BOOK_SECTIONS]
+
+// Event listeners for collection changes
+const collectionChangeListeners: (() => void)[] = []
+
+// Function to notify listeners when collections change
+function notifyCollectionChange() {
+  collectionChangeListeners.forEach((listener) => listener())
+}
+
+// Add a listener for collection changes
+export function addCollectionChangeListener(listener: () => void) {
+  collectionChangeListeners.push(listener)
+  return () => {
+    const index = collectionChangeListeners.indexOf(listener)
+    if (index > -1) {
+      collectionChangeListeners.splice(index, 1)
+    }
+  }
+}
+
+// Helper function to ensure we always return an array
+function ensureArray(data: any): any[] {
+  if (Array.isArray(data)) {
+    return data
+  }
+  if (data && typeof data === "object" && data.data && Array.isArray(data.data)) {
+    return data.data
+  }
+  return []
+}
+
+// === BOOKS API FUNCTIONS ===
+
+// Get new books
+export async function getNewBooks(): Promise<Book[]> {
+  try {
+    const books = await booksApi.getNewBooks()
+    return ensureArray(books)
+  } catch (error) {
+    console.error("Error fetching new books:", error)
+    return []
+  }
+}
+
+// Get popular books
+export async function getPopularBooks(): Promise<Book[]> {
+  try {
+    const books = await booksApi.getPopularBooks()
+    return ensureArray(books)
+  } catch (error) {
+    console.error("Error fetching popular books:", error)
+    return []
+  }
+}
+
+// Get grouped books
+export async function getGroupedBooks(): Promise<any> {
+  try {
+    const books = await booksApi.getGroupedBooks()
+    return books || {}
+  } catch (error) {
+    console.error("Error fetching grouped books:", error)
+    return {}
+  }
+}
+
+// Search books
+export async function searchBooks(query: string): Promise<Book[]> {
+  if (!query.trim()) return []
+
+  try {
+    const books = ensureArray(await booksApi.searchBooks(query))
+    if (books.length > 0) return books
+  } catch (error) {
+    console.error("Error searching books:", error)
+  }
+  try {
+    const res = await fetch(`/api/ol-search?q=${encodeURIComponent(query)}`)
+    return res.ok ? ensureArray(await res.json()) : []
+  } catch {
+    return []
+  }
+}
+
+// Get books by section using the API endpoints from Swagger
+export async function getBooksBySection(section: BookSection): Promise<Book[]> {
+  try {
+    let books: any[] = []
+
+    switch (section) {
+      case BOOK_SECTIONS.FICTION:
+        books = await bookSectionsApi.getFictionBooks()
+        break
+      case BOOK_SECTIONS.ROMANCE:
+        books = await bookSectionsApi.getRomanceBooks()
+        break
+      case BOOK_SECTIONS.HISTORY:
+        books = await bookSectionsApi.getHistoryBooks()
+        break
+      case BOOK_SECTIONS.ADVENTURE:
+        books = await bookSectionsApi.getAdventureBooks()
+        break
+      case BOOK_SECTIONS.PHILOSOPHY:
+        books = await bookSectionsApi.getPhilosophyBooks()
+        break
+      case BOOK_SECTIONS.DRAMA:
+        books = await bookSectionsApi.getDramaBooks()
+        break
+      case BOOK_SECTIONS.MYSTERY:
+        books = await bookSectionsApi.getMysteryBooks()
+        break
+      case BOOK_SECTIONS.CHILDREN:
+        books = await bookSectionsApi.getChildrenBooks()
+        break
+      case BOOK_SECTIONS.SCIENCE:
+        books = await bookSectionsApi.getScienceBooks()
+        break
+      case BOOK_SECTIONS.FANTASY:
+        books = await bookSectionsApi.getFantasyBooks()
+        break
+      default:
+        console.warn(`Unknown section: ${section}`)
+        return []
+    }
+
+    const list = ensureArray(books)
+    return list.length > 0 ? list : await olSubject(section)
+  } catch (error) {
+    console.error(`Error fetching ${section} books:`, error)
+    try {
+      return await olSubject(section)
+    } catch {
+      return []
+    }
+  }
+}
+
+// Get fiction books
+export async function getFictionBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.FICTION)
+}
+
+// Get romance books
+export async function getRomanceBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.ROMANCE)
+}
+
+// Get history books
+export async function getHistoryBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.HISTORY)
+}
+
+// Get adventure books
+export async function getAdventureBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.ADVENTURE)
+}
+
+// Get philosophy books
+export async function getPhilosophyBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.PHILOSOPHY)
+}
+
+// Get drama books
+export async function getDramaBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.DRAMA)
+}
+
+// Get mystery books
+export async function getMysteryBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.MYSTERY)
+}
+
+// Get children books
+export async function getChildrenBooks(): Promise<Book[]> {
+  return getBooksBySection(BOOK_SECTIONS.CHILDREN)
+}
+
+// Get science books
+export async function getScienceBooks(): Promise<Book[]> {
   return getBooksBySection(BOOK_SECTIONS.SCIENCE)
 }
 
@@ -536,3 +770,37 @@ export async function getBookRecommendations(title: string): Promise<Book[]> {
     return []
   }
 }
+
+
+// Result that tells "the list could not be loaded" apart from "the list is really empty".
+// Tries the main API first, then the Open Library fallback if given.
+export interface BookListResult {
+  books: Book[]
+  error: boolean
+}
+
+export async function loadBookList(loader: () => Promise<any>, fallback?: () => Promise<Book[]>): Promise<BookListResult> {
+  let failed = false
+  try {
+    const books = ensureArray(await loader())
+    if (books.length > 0) return { books, error: false }
+  } catch (error) {
+    console.error("Book list request failed:", error)
+    failed = true
+  }
+  if (fallback) {
+    try {
+      const books = await fallback()
+      if (books.length > 0) return { books, error: false }
+    } catch (error) {
+      console.error("Fallback book list failed:", error)
+      failed = true
+    }
+  }
+  return { books: [], error: failed }
+}
+
+export const loadPopularBooks = () => loadBookList(() => booksApi.getPopularBooks(), () => olPopular())
+export const loadNewBooks = () => loadBookList(() => booksApi.getNewBooks(), () => olNew())
+export const loadFictionBooks = () => loadBookList(() => bookSectionsApi.getFictionBooks(), () => olSubject("fiction"))
+export const loadNewArrivals = () => loadBookList(() => storeApi.getNewArrivals(), () => olNew())
