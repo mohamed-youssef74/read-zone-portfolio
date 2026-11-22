@@ -5,6 +5,9 @@ import BookCard from "@/components/book-card"
 import HeroSection from "@/components/hero-section"
 import { getFictionBooks } from "@/services/book-service"
 
+// Re-fetch book lists at most once an hour instead of freezing them at build time.
+export const revalidate = 3600
+
 export default async function NovelPage() {
   const novelBooks = await getFictionBooks()
 
