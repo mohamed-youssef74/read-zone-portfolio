@@ -4,6 +4,9 @@ import HeroSection from "@/components/hero-section"
 import BookCard from "@/components/book-card"
 import { getPopularBooks } from "@/services/book-service"
 
+// Re-fetch book lists at most once an hour instead of freezing them at build time.
+export const revalidate = 3600
+
 export default async function BusinessPage() {
   // Use popular books as business books for now
   const businessBooks = await getPopularBooks()
