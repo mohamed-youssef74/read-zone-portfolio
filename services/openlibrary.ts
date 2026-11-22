@@ -3,7 +3,7 @@
 import type { Book } from "./book-service"
 
 const OL = "https://openlibrary.org"
-const REVALIDATE = { next: { revalidate: 3600 } } as RequestInit
+const REVALIDATE = { next: { revalidate: 60 } } as RequestInit
 
 export interface OLBook extends Book {
   olid: string
@@ -35,9 +35,20 @@ function toBook(x: { olid: string; title: string; authors: string[]; cover?: num
 }
 
 async function getJson(url: string) {
-  const res = await fetch(url, REVALIDATE)
-  if (!res.ok) throw new Error(`Open Library error: ${res.status}`)
-  return res.json()
+  // Retry transient provider failures once; never substitute unrelated books.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, { ...REVALIDATE, signal: AbortSignal.timeout(8000) })
+      if (!res.ok) {
+        if (attempt === 0 && res.status >= 500) continue
+        throw new Error(`Open Library error: ${res.status}`)
+      }
+      return await res.json()
+    } catch (error) {
+      if (attempt === 1) throw error
+    }
+  }
+  throw new Error("Open Library request failed")
 }
 
 function fromSearch(docs: any[]): OLBook[] {
