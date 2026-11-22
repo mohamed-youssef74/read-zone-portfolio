@@ -423,6 +423,73 @@ function notifyCollectionChange() {
 // Add a listener for collection changes
 export function addCollectionChangeListener(listener: () => void) {
   collectionChangeListeners.push(listener)
+import { booksApi, userLibraryApi, storeApi, offlineBooksApi, recommendationsApi, bookSectionsApi } from "./api-service"
+
+// Types based on the API schema
+export interface Book {
+  id: number
+  externalId: number
+  title: string
+  authors: Author[]
+  subjects: string[]
+  formats: { [key: string]: string }
+  coverImageUrl?: string
+  bookAuthors?: BookAuthor[]
+  orderItems?: any[]
+  reviews?: Review[]
+}
+
+export interface Author {
+  id: number
+  name: string
+  bookAuthors?: BookAuthor[]
+}
+
+export interface BookAuthor {
+  bookId: number
+  book: Book
+  authorId: number
+  author: Author
+}
+
+export interface Review {
+  id: number
+  rating: number
+  feedback?: string
+  createdAt: string
+  userId: number
+  user: any
+  bookId: number
+  book: Book
+}
+
+// Available book sections from API
+export const BOOK_SECTIONS = {
+  FICTION: "fiction",
+  ROMANCE: "romance",
+  HISTORY: "history",
+  ADVENTURE: "adventure",
+  PHILOSOPHY: "philosophy",
+  DRAMA: "drama",
+  MYSTERY: "mystery",
+  CHILDREN: "children",
+  SCIENCE: "science",
+  FANTASY: "fantasy",
+} as const
+
+export type BookSection = (typeof BOOK_SECTIONS)[keyof typeof BOOK_SECTIONS]
+
+// Event listeners for collection changes
+const collectionChangeListeners: (() => void)[] = []
+
+// Function to notify listeners when collections change
+function notifyCollectionChange() {
+  collectionChangeListeners.forEach((listener) => listener())
+}
+
+// Add a listener for collection changes
+export function addCollectionChangeListener(listener: () => void) {
+  collectionChangeListeners.push(listener)
   return () => {
     const index = collectionChangeListeners.indexOf(listener)
     if (index > -1) {
