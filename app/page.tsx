@@ -4,38 +4,6 @@ import Footer from "@/components/footer"
 import BookCard from "@/components/book-card"
 import HeroSection from "@/components/hero-section"
 import SearchForm from "@/components/search-form"
-import { getNewBooks, getPopularBooks, getFictionBooks } from "@/services/book-service"
-
-export default async function Home() {
-  // Fetch data from the API with proper error handling
-  let popularBooks: any[] = []
-  let fictionBooks: any[] = []
-  let newArrivals: any[] = []
-
-  try {
-    const [popularResult, fictionResult, newResult] = await Promise.allSettled([
-      getPopularBooks(),
-      getFictionBooks(),
-      getNewBooks(),
-    ])
-
-    // Ensure we always have arrays
-    popularBooks = popularResult.status === "fulfilled" && Array.isArray(popularResult.value) ? popularResult.value : []
-
-    fictionBooks = fictionResult.status === "fulfilled" && Array.isArray(fictionResult.value) ? fictionResult.value : []
-
-    newArrivals = newResult.status === "fulfilled" && Array.isArray(newResult.value) ? newResult.value : []
-  } catch (error) {
-    console.error("Error fetching books:", error)
-    // All arrays are already initialized as empty arrays
-  }
-
-  return (
-import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
-import BookCard from "@/components/book-card"
-import HeroSection from "@/components/hero-section"
-import SearchForm from "@/components/search-form"
 import { loadNewBooks, loadPopularBooks, loadFictionBooks } from "@/services/book-service"
 
 // Re-fetch book lists at most once an hour instead of freezing them at build time.
