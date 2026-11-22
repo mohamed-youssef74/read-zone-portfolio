@@ -5,6 +5,9 @@ import HeroSection from "@/components/hero-section"
 import BookCard from "@/components/book-card"
 import { getScienceBooks } from "@/services/book-service"
 
+// Re-fetch book lists at most once an hour instead of freezing them at build time.
+export const revalidate = 3600
+
 export default async function EducationPage() {
   const educationBooks = await getScienceBooks()
 
