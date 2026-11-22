@@ -2,11 +2,15 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import BookCard from "@/components/book-card"
 import HeroSection from "@/components/hero-section"
-import { getFictionBooks } from "@/services/book-service"
+import { loadFictionBooks } from "@/services/book-service"
+
+// Re-fetch book lists at most once an hour instead of freezing them at build time.
+export const revalidate = 3600
 
 export default async function FictionPage() {
   // Get fiction books from API
-  const fictionBooks = await getFictionBooks().catch(() => [])
+  const result = await loadFictionBooks()
+  const fictionBooks = result.books
 
   return (
     <main>
@@ -17,12 +21,16 @@ export default async function FictionPage() {
         <h1 className="book-list-title">Fiction Books</h1>
 
         <div className="section">
+          {result.error && (
+            <p className="text-center py-8 text-gray-500">Books could not be loaded right now. Please try again later.</p>
+          )}
           <div className="book-grid-full">
             {fictionBooks.map((book) => (
               <BookCard
                 key={book.id}
                 id={book.id}
                 externalId={book.externalId}
+                olid={book.olid}
                 title={book.title}
                 coverImage={book.coverImageUrl}
                 rating={4.0}
