@@ -25,68 +25,6 @@ interface BookCardProps {
   author?: string
   authors?: Array<{ name: string }> // API returns authors array
   showActions?: boolean
-}
-
-export default function BookCard({
-  id,
-  externalId,
-  title,
-  coverImage,
-  coverImageUrl,
-  rating = 0,
-  author,
-  authors,
-  showActions = true,
-}: BookCardProps) {
-  const router = useRouter()
-  const { isLoggedIn } = useAuth()
-  const [isFav, setIsFav] = useState(false)
-  const [isBookmark, setIsBookmark] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Use externalId if provided, otherwise use id
-  const bookId = externalId || id
-
-  // Get the cover image URL
-  const imageUrl = coverImageUrl || coverImage || "/placeholder.svg"
-
-  // Get author name
-  const authorName = author || (authors && authors.length > 0 ? authors[0].name : "Unknown Author")
-
-  // Update state when collections change
-  useEffect(() => {
-    const updateState = async () => {
-      if (isLoggedIn && bookId) {
-        try {
-          const [favStatus, bookmarkStatus] = await Promise.all([isFavorite(bookId), isBookmarked(bookId)])
-          setIsFav(favStatus)
-          setIsBookmark(bookmarkStatus)
-
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { useAuth } from "@/components/auth-provider"
-import {
-  toggleFavorite,
-  toggleBookmark,
-  addToRecentlyPlayed,
-  isFavorite,
-  isBookmarked,
-  addCollectionChangeListener,
-} from "@/services/book-service"
-import { toast } from "@/hooks/use-toast"
-
-interface BookCardProps {
-  id: number // Changed from string to number for API compatibility
-  externalId?: number // Add externalId for API calls
-  title: string
-  coverImage?: string
-  coverImageUrl?: string // API uses coverImageUrl
-  rating?: number
-  author?: string
-  authors?: Array<{ name: string }> // API returns authors array
-  showActions?: boolean
   olid?: string // Open Library work id (fallback source)
 }
 
