@@ -17,10 +17,16 @@ export default function SearchPage() {
   useEffect(() => {
     if (query) {
       setIsLoading(true)
-      // In a real app, this would be an API call
-      const searchResults = searchBooks(query)
-      setResults(searchResults)
-      setIsLoading(false)
+      let cancelled = false
+      searchBooks(query).then((searchResults) => {
+        if (!cancelled) {
+          setResults(searchResults)
+          setIsLoading(false)
+        }
+      })
+      return () => {
+        cancelled = true
+      }
     } else {
       setResults([])
       setIsLoading(false)
@@ -45,9 +51,12 @@ export default function SearchPage() {
                 <BookCard
                   key={book.id}
                   id={book.id}
+                  externalId={book.externalId}
+                  olid={(book as any).olid}
                   title={book.title}
-                  coverImage={book.coverImage}
-                  rating={book.rating}
+                  coverImage={book.coverImageUrl}
+                  authors={book.authors}
+                  rating={4.0}
                 />
               ))}
             </div>
